@@ -6,6 +6,7 @@ try:
 
 test:
 	pytest --maxfail=1 -v --cov=beancount_interpolate
+	mypy -p beancount_interpolate
 
 clean:
 	rm -rf build dist beancount_interpolate.egg-info/
