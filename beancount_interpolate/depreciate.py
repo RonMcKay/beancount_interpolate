@@ -1,7 +1,9 @@
 __author__ = 'Akuukis <akuukis@kalvis.lv>'
 
+from typing import List, NamedTuple, Dict, Any, Tuple
+
 from beancount.core.number import D
-from beancount.core.data import filter_txns
+from beancount.core.data import filter_txns, Transaction
 
 from .common import extract_mark_tx
 from .common import extract_mark_posting
@@ -12,7 +14,11 @@ from .common import read_config
 __plugins__ = ['depreciate']
 
 
-def depreciate(entries, options_map, config_string=""):
+def depreciate(
+  entries: List[NamedTuple],
+  options_map: Dict[str, Any],
+  config_string:str = ""
+) -> Tuple[List[NamedTuple], List[Any]]:
     """
     Beancount plugin: Generates new entries to depreciate target posting over given period.
 
@@ -24,7 +30,7 @@ def depreciate(entries, options_map, config_string=""):
       A tuple of entries and errors.
     """
 
-    errors = []
+    errors = []  # type: List[Any]
 
     ## Parse config and set defaults
     config_obj = read_config(config_string)
@@ -44,7 +50,7 @@ def depreciate(entries, options_map, config_string=""):
         },
     }
 
-    newEntries = []
+    newEntries = []  # type: List[Transaction]
     for tx in filter_txns(entries):
 
         # Spread at posting level because not all account types may be eligible.
@@ -67,6 +73,6 @@ def depreciate(entries, options_map, config_string=""):
 
         # For selected postings add new postings bundled into entries.
         if len(selected_postings) > 0:
-            newEntries = newEntries + new_filtered_entries(tx, params, distribute_over_period, selected_postings, config)
+            newEntries = newEntries + new_filtered_entries(tx, distribute_over_period, selected_postings, config)
 
     return entries + newEntries, errors

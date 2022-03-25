@@ -2,15 +2,17 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import math
 import re
+from typing import Dict, Any, Union, Tuple, List, Callable
+from decimal import Decimal
 from beancount.core.number import D
 from beancount.core.amount import Amount, mul
 from beancount.core.data import Transaction, new_metadata
 from beancount.core.data import Posting
 
-def round_to(n):
+def round_to(n: Decimal) -> float:
     return round(n*100)/100
 
-def extract_mark_posting(posting, config):
+def extract_mark_posting(posting: Posting, config: Dict) -> Union[Any,bool]:
     """
     Extract mark from posting, if any.
 
@@ -27,7 +29,7 @@ def extract_mark_posting(posting, config):
     return False
 
 
-def get_number_of_txn(begin_date, duration, step):
+def get_number_of_txn(begin_date: datetime.date, duration: relativedelta, step: relativedelta) -> int:
     """
     Computes the number of transactions within a given interval and step length.
 
@@ -51,7 +53,7 @@ def get_number_of_txn(begin_date, duration, step):
     return n_txn
 
 
-def extract_mark_tx(tx, config):
+def extract_mark_tx(tx: Transaction, config: Dict) -> Union[str,Any]:
     """
     Extract mark from transaction, if any.
 
@@ -71,7 +73,7 @@ def extract_mark_tx(tx, config):
                     return tag[len(alias+config['alias_seperator']):] or ''
     return ''
 
-def parse_mark(mark, default_date, config):
+def parse_mark(mark: str, default_date: datetime.date, config: Dict) -> Tuple[datetime.date,relativedelta,relativedelta]:
     """
     Parse mark into date, duration and step.
 
@@ -152,7 +154,12 @@ RE_PARSING = re.compile((
 ))
 
 
-def distribute_over_period(params, default_date, total_value, config):
+def distribute_over_period(
+    params: str,
+    default_date: datetime.date,
+    total_value: Decimal,
+    config: Dict
+) -> Tuple[List[datetime.date],List[Decimal]]:
     """
     Distribute value over points in time.
 
@@ -205,7 +212,7 @@ def distribute_over_period(params, default_date, total_value, config):
     return (dates, amounts)
 
 
-def parse_length(int_or_string):
+def parse_length(int_or_string: str) -> relativedelta:
     """
     Parses length value or keywords into value.
 
@@ -243,7 +250,7 @@ def parse_length(int_or_string):
     raise Exception('Invalid period: '+int_or_string)
 
 
-def longest_leg(all_amounts):
+def longest_leg(all_amounts: List[List[Decimal]]) -> int:
     """
     Find the longest leg between amounts.
 
@@ -256,14 +263,19 @@ def longest_leg(all_amounts):
     for amounts in all_amounts:
         if len(amounts) == 0:
             # Should not have empty postings, but if do then at least don't crash.
-            firsts.append( 0 )
+            firsts.append( D(str(0)) )
         else:
             firsts.append( abs(amounts[0]) )
 
     return firsts.index(max(firsts))
 
 
-def new_filtered_entries(tx, params, get_amounts, selected_postings, config):
+def new_filtered_entries(
+    tx: Transaction,
+    get_amounts: Callable,
+    selected_postings: List[Posting],
+    config: Dict
+) -> List[Transaction]:
     """
     Beancount plugin: Dublicates all transaction's postings over time.
 
@@ -283,7 +295,7 @@ def new_filtered_entries(tx, params, get_amounts, selected_postings, config):
         dates, amounts = get_amounts(params, tx.date, posting.units.number, config)
         all_pairs.append( (dates, amounts, posting, new_account) )
 
-    map_of_dates = {}
+    map_of_dates = {}  # type: Dict[datetime.date, List[Posting]]
 
     for dates, amounts, posting, new_account in all_pairs:
 
@@ -329,7 +341,7 @@ def new_filtered_entries(tx, params, get_amounts, selected_postings, config):
     return new_transactions
 
 
-def new_whole_entries(tx, params, get_amounts, config):
+def new_whole_entries(tx: Transaction, params: str, get_amounts: Callable, config: Dict) -> List[Transaction]:
 
 
     all_amounts = [];
@@ -381,7 +393,7 @@ def new_whole_entries(tx, params, get_amounts, config):
 
     return new_transactions
 
-def read_config(config_string):
+def read_config(config_string: str) -> Dict[str, Any]:
     if len(config_string) == 0:
         config_obj = {}
     else:

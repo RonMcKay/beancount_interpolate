@@ -1,7 +1,10 @@
 __author__ = 'Akuukis <akuukis@kalvis.lv>'
+import datetime
+from typing import NamedTuple, List, Dict, Any, Tuple
+from decimal import Decimal
 
 from beancount.core.amount import Amount
-from beancount.core.data import Posting, filter_txns, new_metadata
+from beancount.core.data import Posting, filter_txns, new_metadata, Transaction
 from beancount.core.number import D
 
 from .common import extract_mark_tx
@@ -13,11 +16,20 @@ from .common import read_config
 __plugins__ = ['spread']
 
 
-def distribute_over_period_negative(params, default_date, total_value, config):
+def distribute_over_period_negative(
+    params: str,
+    default_date: datetime.date,
+    total_value: Decimal,
+    config: Dict
+) -> Tuple[List[datetime.date],List[Decimal]]:
     return distribute_over_period(params, default_date, -total_value, config)
 
 
-def spread(entries, options_map, config_string=""):
+def spread(
+    entries: List[NamedTuple],
+    options_map: Dict[str, Any],
+    config_string: str = ""
+) -> Tuple[List[NamedTuple], List[Any]]:
     """
     Beancount plugin: Generate new entries to allocate P&L of target income/expense posting over given period.
 
@@ -29,7 +41,7 @@ def spread(entries, options_map, config_string=""):
       A tuple of entries and errors.
     """
 
-    errors = []
+    errors = []  # type: List[Any]
 
     ## Parse config and set defaults
     config_obj = read_config(config_string)
@@ -49,7 +61,7 @@ def spread(entries, options_map, config_string=""):
         },
     }
 
-    newEntries = []
+    newEntries = []  # type: List[Transaction]
     for tx in filter_txns(entries):
 
         # Spread at posting level because not all account types may be eligible.
@@ -80,6 +92,6 @@ def spread(entries, options_map, config_string=""):
 
         # For selected postings add new postings bundled into entries.
         if len(selected_postings) > 0:
-            newEntries = newEntries + new_filtered_entries(tx, params, distribute_over_period_negative, selected_postings, config)
+            newEntries = newEntries + new_filtered_entries(tx, distribute_over_period_negative, selected_postings, config)
 
     return entries + newEntries, errors

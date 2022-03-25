@@ -1,7 +1,9 @@
 __author__ = 'Akuukis <akuukis@kalvis.lv>'
 
+from typing import NamedTuple, List, Dict, Any, Tuple
+
 from beancount.core.amount import Amount
-from beancount.core.data import filter_txns
+from beancount.core.data import filter_txns, Transaction
 from beancount.core.number import D
 
 from .common import extract_mark_tx
@@ -12,7 +14,11 @@ from .common import read_config
 __plugins__ = ['split']
 
 
-def split(entries, options_map, config_string=""):
+def split(
+    entries: List[NamedTuple],
+    options_map: Dict[str, Any],
+    config_string: str = ""
+) -> Tuple[List[NamedTuple], List[Any]]:
     """
     Beancount plugin: Dublicates all entry postings over time at fraction of value.
 
@@ -24,7 +30,7 @@ def split(entries, options_map, config_string=""):
       A tuple of entries and errors.
     """
 
-    errors = []
+    errors = []  # type: List[Any]
 
     ## Parse config and set defaults
     config_obj = read_config(config_string)
@@ -40,7 +46,7 @@ def split(entries, options_map, config_string=""):
         'tag'             : config_obj.pop('tag'             , 'splitted'),
     }
 
-    newEntries = []
+    newEntries = []  # type: List[Transaction]
     trashbin = []
     for tx in filter_txns(entries):
 

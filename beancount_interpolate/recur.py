@@ -1,7 +1,9 @@
 __author__ = 'Akuukis <akuukis@kalvis.lv>'
 import datetime
+from decimal import Decimal
+from typing import Dict, List, Tuple, Any, NamedTuple
 
-from beancount.core.data import filter_txns
+from beancount.core.data import filter_txns, Transaction
 from beancount.core.number import D
 
 from .common import extract_mark_tx
@@ -13,7 +15,12 @@ from .common import get_number_of_txn
 __plugins__ = ['recur']
 
 
-def duplicate_over_period(params, default_date, value, config):
+def duplicate_over_period(
+    params: str,
+    default_date: datetime.date,
+    value: Decimal,
+    config: Dict
+) -> Tuple[List[datetime.date],List[Decimal]]:
     begin_date, duration, step = parse_mark(params, default_date, config)
     period = get_number_of_txn(begin_date, duration, step)
 
@@ -36,7 +43,11 @@ def duplicate_over_period(params, default_date, value, config):
     return (dates, amounts)
 
 
-def recur(entries, options_map, config_string=""):
+def recur(
+    entries: List[NamedTuple],
+    options_map: Dict[str, Any],
+    config_string: str = ""
+) -> Tuple[List[NamedTuple], List[Any]]:
     """
     Beancount plugin: Duplicates all entry postings over time.
 
@@ -48,7 +59,7 @@ def recur(entries, options_map, config_string=""):
       A tuple of entries and errors.
     """
 
-    errors = []
+    errors = []  # type: List[Any]
 
     ## Parse config and set defaults
     config_obj = read_config(config_string)
@@ -64,7 +75,7 @@ def recur(entries, options_map, config_string=""):
         'tag'             : config_obj.pop('tag'             , 'recurred'),
     }
 
-    newEntries = []
+    newEntries = []  # type: List[Transaction]
     trashbin = []
     for tx in filter_txns(entries):
 
