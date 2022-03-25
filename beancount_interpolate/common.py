@@ -69,7 +69,7 @@ def extract_mark_tx(tx, config):
             for tag in tx.tags:
                 if tag[0:len(alias+config['alias_seperator'])] == alias+config['alias_seperator'] or tag == alias:
                     return tag[len(alias+config['alias_seperator']):] or ''
-    return False
+    return ''
 
 def parse_mark(mark, default_date, config):
     """
